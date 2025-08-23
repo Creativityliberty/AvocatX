@@ -1,0 +1,232 @@
+{
+  "reasoning_schema": {
+    "exp": [
+      "transcription_audio",
+      "detection_emotion",
+      "segmentation_narrative"
+    ],
+    "se": [
+      {
+        "domain": "Speech-to-Text",
+        "subdomains": [
+          "Whisper",
+          "Gemini Live",
+          "français juridique"
+        ]
+      },
+      {
+        "domain": "Analyse émotionnelle",
+        "subdomains": [
+          "détresse",
+          "urgence",
+          "cohérence"
+        ]
+      }
+    ],
+    "wm": {
+      "g": "Transcrire et analyser le témoignage audio du justiciable",
+      "sg": "Analyser témoignage OQTF Marie Dubois",
+      "pr": {
+        "completed": [
+          "Analyser la qualité audio",
+          "Transcription initiale",
+          "Détection émotionnelle",
+          "Segmentation narrative"
+        ],
+        "current": []
+      },
+      "ctx": "Dossier urgent avec enjeux familiaux"
+    },
+    "kg": {
+      "tri": [
+        {
+          "sub": "qualite_audio",
+          "pred": "determine",
+          "obj": "precision_transcription"
+        },
+        {
+          "sub": "stress_emotionnel",
+          "pred": "indique",
+          "obj": "urgence_dossier"
+        },
+        {
+          "sub": "enfant_scolarise",
+          "pred": "renforce",
+          "obj": "attaches_familiales"
+        },
+        {
+          "sub": "emploi_stable",
+          "pred": "prouve",
+          "obj": "integration_sociale"
+        }
+      ]
+    },
+    "logic": {
+      "propos": [
+        {
+          "symb": "Q(audio) ∧ M(whisper) → T(transcription)",
+          "nl": "Audio de qualité avec Whisper produit une transcription fiable"
+        },
+        {
+          "symb": "E(stress) ∧ F(famille) → U(urgence_haute)",
+          "nl": "Stress émotionnel avec enjeux familiaux = urgence élevée"
+        }
+      ],
+      "proofs": [
+        {
+          "symb": "C(0.82) > 0.8 → R(reliable)",
+          "nl": "Confiance élevée confirme transcription fiable"
+        },
+        {
+          "symb": "E(anxiety) ∧ M(famille) → U(critical)",
+          "nl": "Anxiété + marqueurs familiaux = urgence critique"
+        },
+        {
+          "symb": "S(5) ∧ C(0.89) → N(strong)",
+          "nl": "5 segments cohérents forment un récit solide"
+        }
+      ],
+      "crits": [],
+      "doubts": [
+        {
+          "symb": "Q(0.75) < 0.8 → ?R(reliable)",
+          "nl": "Qualité modérée peut affecter la fiabilité"
+        }
+      ]
+    },
+    "chain": {
+      "steps": [
+        {
+          "index": 0,
+          "depends_on": [],
+          "description": "Analyser la qualité audio",
+          "prompt": "Évaluer la clarté et la qualité de l'enregistrement"
+        },
+        {
+          "index": 1,
+          "depends_on": [
+            0
+          ],
+          "description": "Transcription initiale",
+          "prompt": "Transcrire l'audio en texte avec Whisper"
+        },
+        {
+          "index": 2,
+          "depends_on": [
+            1
+          ],
+          "description": "Détection émotionnelle",
+          "prompt": "Analyser les émotions et le stress dans la voix"
+        },
+        {
+          "index": 3,
+          "depends_on": [
+            1,
+            2
+          ],
+          "description": "Segmentation narrative",
+          "prompt": "Découper le récit en segments logiques"
+        }
+      ],
+      "reflect": "\n    Analyse métacognitive Agent Écouteur RRLA:\n    - Efficacité: 100.0% (4/4 étapes)\n    - Erreurs: 0\n    - Avertissements: 1\n    - Apprentissages appliqués: 2\n    - Raisonnement logique: 3 preuves, 1 incertitudes\n    - Adaptations contextuelles: Urgence upgradée grâce à l'expérience familiale\n    ",
+      "err": [],
+      "note": [],
+      "warn": [
+        "Qualité audio suboptimale - surveillance requise"
+      ]
+    },
+    "rrla_ext": {
+      "memory_experiential": [
+        {
+          "context": "Transcription audio OQTF avec bruit de fond",
+          "error": "Confiance Whisper < 0.6 sur segments émotionnels",
+          "solution": "Utiliser Gemini Live pour passages avec pleurs/stress",
+          "validated": true,
+          "timestamp": "2025-07-27T13:11:02.868990"
+        },
+        {
+          "context": "Analyse émotionnelle témoignage famille",
+          "error": "Sous-estimation urgence malgré mention enfants",
+          "solution": "Prioriser automatiquement si 'école' ou 'enfant' détecté",
+          "validated": true,
+          "timestamp": "2025-07-27T13:11:02.869029"
+        }
+      ],
+      "anti_recurrence": true,
+      "temporal_memory": [
+        {
+          "timestamp": "2025-07-27T13:11:02.869150",
+          "action": "Étape 0 terminée: Analyser la qualité audio"
+        },
+        {
+          "timestamp": "2025-07-27T13:11:02.869244",
+          "action": "Étape 1 terminée: Transcription initiale"
+        },
+        {
+          "timestamp": "2025-07-27T13:11:02.869306",
+          "action": "Étape 2 terminée: Détection émotionnelle"
+        },
+        {
+          "timestamp": "2025-07-27T13:11:02.869346",
+          "action": "Étape 3 terminée: Segmentation narrative"
+        }
+      ],
+      "depth": "direct",
+      "relational_networks": [],
+      "anticipation": [],
+      "interaction": [],
+      "adaptability": null,
+      "auto_documentation": true,
+      "explainability": "\n    Agent Écouteur RRLA - Traitement témoignage OQTF:\n    ✅ Audio analysé (score 0.75) avec surveillance qualité\n    ✅ Transcription fiable (67 mots, confiance 0.82)\n    ✅ Émotion détectée (anxiété) + urgence upgradée (famille)\n    ✅ Segmentation cohérente (5 segments, score 0.89)\n    🧠 2 expériences appliquées pour optimiser le traitement\n    🔬 Raisonnement logique avec 3 preuves validées\n    "
+    },
+    "agent_id": "defenseur_ia_ecouteur",
+    "timestamp": "2025-07-27T13:11:02.868699"
+  },
+  "execution_results": {
+    "step_0": {
+      "quality_score": 0.75,
+      "noise_level": "medium",
+      "clarity": "good",
+      "duration": 125
+    },
+    "step_1": {
+      "text": "Je m'appelle Marie, j'ai reçu une OQTF mais j'ai ma fille à l'école ici...",
+      "confidence": 0.82,
+      "model": "whisper-large",
+      "word_count": 67
+    },
+    "step_2": {
+      "primary_emotion": "anxiety",
+      "intensity": 0.78,
+      "urgency": "critical",
+      "family_markers": [
+        "fille",
+        "école"
+      ]
+    },
+    "step_3": {
+      "segments": 5,
+      "coherence": 0.89,
+      "themes": [
+        "identité",
+        "OQTF",
+        "travail",
+        "famille",
+        "intégration"
+      ],
+      "structure": "chronological_emotional"
+    }
+  },
+  "dag_visualization": {
+    "ascii": "╔═══════════════════════════════════════════════════════════════╗\n║ AGENT: defenseur_ia_ecouteur                              ║\n║ OBJECTIF: Transcrire et analyser le témoignage audio du justiciable ║\n╠═══════════════════════════════════════════════════════════════╣\n║ ├─ [0] Analyser la qualité audio                          ║\n║ ├─ [1] Transcription initiale                             ║\n║ │    └─ Dépend de: 0                                        ║\n║ ├─ [2] Détection émotionnelle                             ║\n║ │    └─ Dépend de: 1                                        ║\n║ └─ [3] Segmentation narrative                             ║\n║ │    └─ Dépend de: 1, 2                                     ║\n╚═══════════════════════════════════════════════════════════════╝",
+    "mermaid": "graph TD\n    step_0[\"Analyser la qualité audio\"]\n    step_1[\"Transcription initiale\"]\n    step_2[\"Détection émotionnelle\"]\n    step_3[\"Segmentation narrative\"]\n    step_0 --> step_1\n    step_1 --> step_2\n    step_1 --> step_3\n    step_2 --> step_3"
+  },
+  "performance_metrics": {
+    "completion_rate": 100.0,
+    "error_count": 0,
+    "warning_count": 1,
+    "knowledge_triplets": 4,
+    "experiences_count": 2,
+    "logical_proofs": 3
+  }
+}

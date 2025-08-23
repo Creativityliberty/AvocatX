@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.so
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+dist/
+build/
+site/
+
+# Poetry
+.poetry/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.cache/
+coverage/
+frontend/build/
+frontend/dist/
+
+# Editor/OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Docker / data
+*.log
+docker-data/
+postgres_data/
+redis_data/
+
+# Project data
+uploads/
+backend/uploads/

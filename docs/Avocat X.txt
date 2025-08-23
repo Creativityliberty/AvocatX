@@ -1,0 +1,413 @@
+﻿┌──────────────────────────────────────────────────┐
+ │                DEFENSEUR-IA (Python)            │
+ │     monorepo Poetry • FastAPI • Uvicorn         │
+ └──────────────────────────────────────────────────┘
+               │   (single virtual-env / src/)
+ ┌────────────────────────────────────────────────────────────────────────┐
+ │                           REPO LAYOUT                                 │
+ │                                                                        │
+ │  pyproject.toml    ← Poetry deps, scripts & tooling                    │
+ │  README.md         ← how-to run                                        │
+ │  scripts/          ← helper bash / make targets                        │
+ │  tests/            ← pytest unit/integ                                 │
+ │                                                                        │
+ │  src/defenseur_ia/                                                    │
+ │  ├─ core/         ┬ node.py          (BaseNode ABC)                    │
+ │  │               │ flow.py          (sync / async runner)             │
+ │  │               └ shared.py        (SharedStore JSON)                │
+ │  ├─ agents/       00_ecouteur.py     12_avocat_ia.py …                │
+ │  ├─ utils/        stt.py  legifrance.py  ocr.py  anonymise.py  …      │
+ │  ├─ types/        models.py   (Pydantic v2 models)                    │
+ │  │                                                                _   │
+ │  ├─ cli.py     ← entry “python -m defenseur_ia.cli <fichier|txt>”  |   │
+ │  └─ server/                                                         |  │
+ │      └ main.py  ← FastAPI app (REST + WS)  ⇒  uvicorn …            |  │
+ └────────────────────────────────────────────────────────────────────────┘
+
+
+
+
+FLOW D’EXÉCUTION  (0→11)  ───────────  src/defenseur_ia/core/flow.py
+────────────────────────────────────────────────────────────────────────
+
+
+           (wav/mp3/texte)                         (dossier.json)
+USER → cli.py ──┬───────────────┐         ┌─────────────────────────┐
+                │               │  R/W    │      SharedStore        │
+                ▼               │────────►│  (mémoire + persistance)│
+          0 ÉCOUTEUR            │         └────────┬────────────────┘
+         (utils/stt.py)         │          writes  │
+  OpenAI Audio / Gemini Live    │<───────────────┐ │
+                │               ▼                │ │
+          1 CADREUR JURIDIQUE  (utils/legifrance.py OAuth+search)    │
+                │               ▼                                    │
+          3 PARSEUR PREUVES  (utils/ocr.py + mailparser)             │
+                │               ▼                                    │
+          4 JURISTE MATCHING  (utils/embedding.py + FAISS)           │
+                │               ▼                                    │
+          5 RECHERCHE WEB     (scrapy / httpx)                       │
+                │               ▼                                    │
+          6 RÉDACTEUR NARRATIF (OpenAI chat)                         │
+                │               ▼                                    │
+          7 RELECTEUR IA #1 (QA)  ──► 7b AGRÉGATEUR (vérif axes)     │
+                │               ▼                                    │
+          8 RELECTEUR IA #2                                          │
+                │               ▼                                    │
+          9 SYNTHÈSE STRATÉG.                                        │
+                │               ▼                                    │
+         10 AVOCAT IA  (requête finale)                              │
+                │               ▼                                    │
+         11 EXPORT FINAL  (utils/export.py → WeasyPrint PDF + ZIP)   │
+────────────────────────────────────────────────────────────────────────
+
+
+
+
+EXTERNES / UTILS
+──────────────────────────────────────────────
+  stt.py              → OpenAI /v1/audio/transcriptions  •  Gemini Live Streaming
+  legifrance.py       → OAuth2 token + /search (sandbox-api.piste.gouv.fr)
+  ocr.py              → Tesseract (Docker)  /  pdf-parse
+  anonymise.py        → regex + chat GPT
+  embedding.py        → sentence-transformers (all-MiniLM) + faiss-cpu
+  export.py           → WeasyPrint CLI  ⇒  dossier.pdf / dossier.zip
+
+
+
+
+PERSISTANCE
+───────────
+  SharedStore.save()  ➜  dossier.json   (# versionné, re-loadable)
+  Annexes physiques   ➜  pieces/<id_piece>.*
+
+
+FASTAPI SERVER (option)
+──────────────────────────────────────────────
+  GET /health
+  POST /upload_piece      (multipart)
+  POST /run_full_flow     (body: dossier_id)
+  GET /status/{id}        (progress via logs.history)
+  WS  /stream/{id}        (SSE transcript / logs)
+
+
+RUN LOCALLY
+───────────
+```bash
+# 1. Install
+poetry install
+# 2. Transcrire + flow complet sur fichier
+poetry run defenseur-ia demo.mp3            # via cli.py
+# 3. Serveur
+poetry run uvicorn defenseur_ia.server.main:app --reload --port 8000
+UNIT TESTS
+──────────
+tests/
+test_ecouteur.py (pytest, audio→narration)
+test_legifrance.py (mock OAuth & sample JSON)
+…
+
+
+ENV VARIABLES
+─────────────
+
+
+ini
+Copier
+Modifier
+OPENAI_API_KEY=sk-…
+GEMINI_API_KEY=AIza…
+LEGIFRANCE_ID=…
+LEGIFRANCE_SECRET=…
+Astuce déploiement : empaquette l’ensemble dans un conteneur Docker multi-stage ; monte pieces/ sur un volume ; lance uvicorn derrière Traefik ou Nginx.
+
+
+🗂️ Tu possèdes maintenant :
+Plan ASCII du service 100 % Python (FastAPI + Uvicorn).
+
+
+Organisation des dossiers & principaux modules.
+
+
+Vue claire du pipeline d’agents et des utilitaires.
+
+
+<!-- docs/04_ARCHITECTURE_DETAILLEE.md -->
+# 04 · ARCHITECTURE DÉTAILLÉE  
+_(version “100 % Python / FastAPI / Poetry”)_
+
+
+Cette page précise **QUI fait QUOI** dans le repo :  
+fichiers, classes, dépendances, données partagées & flux.
+
+
+---
+
+
+## 1. Plan du dépôt
+
+
+```text
+defenseur-ia/
+├─ pyproject.toml
+├─ README.md
+├─ scripts/                # make.sh, docker_build.sh…
+├─ tests/                  # pytest
+└─ src/defenseur_ia/
+   ├─ core/                # moteur d’orchestration
+   ├─ agents/              # 00_… → 12_…
+   ├─ utils/               # stt.py, legifrance/, ocr.py…
+   ├─ types/               # models.py (Pydantic v2)
+   ├─ cli.py               # python -m defenseur_ia.cli <input>
+   └─ server/              # FastAPI (option)
+
+
+________________
+
+
+2. Core
+Fichier
+	Classe(s)
+	Rôle
+	Note
+	core/node.py
+	BaseNode (ABC)
+	API minimale :async exec(ctx)
+	Hook prep/exec/post possible
+	core/flow.py
+	Flow, AsyncFlow
+	Exécute une liste de Nodes :await node.exec({...})
+	Support sync+async ; log/rollback
+	core/shared.py
+	SharedStore
+	State global JSON :+ persist (save/load)
+	In‐process lock (asyncio.Lock)
+	core/logger.py
+	setup_logging()
+	Loguru + rotation
+	Auto-appelé par CLI & server
+	________________
+
+
+3. Agents (src/defenseur_ia/agents)
+Chaque fichier = 1 agent = 1 classe Node.
+Ils manipulent SharedStore ; pas de I/O direct hors utils.
+#
+	Fichier
+	Classe
+	Input (shared.get)
+	Output (shared.set)
+	Actions internes
+	00
+	00_ecouteur.py
+	EcouteurNode
+	input_blob (bytes/str)
+	narration (NarrationJusticiable)
+	STT → utils/stt.transcribe ; segmentation/émotion via GPT
+	01
+	01_cadreur_juridique.py
+	CadreurJuridiqueNode
+	narration
+	axes, legal_corpus
+	GPT “find legal axes”, boucle utils/legifrance.search
+	03
+	03_parseur_preuves.py
+	ParseurPreuvesNode
+	pieces_raw_paths[]
+	pieces[] (PieceParsed)
+	OCR (Tesseract) + mailparser + anonymise
+	04
+	04_juriste_matching.py
+	JuristeMatchingNode
+	pieces, legal_corpus
+	matches[]
+	Embed textes -> FAISS KNN
+	05
+	05_recherche_web.py
+	WebScoutNode
+	axes
+	web_refs[]
+	utils/scraper.scrape_forums
+	06
+	06_redacteur_narratif.py
+	RedacteurNode
+	narration, matches, web_refs
+	draft.v0
+	GPT-4o “compose récit”
+	07
+	07_relecteur1.py
+	Relecteur1Node
+	draft.v0
+	draft.v1 (corrigé)
+	LLM critique, suggestions
+	07b
+	07b_agregateur.py
+	AgregateurNode
+	draft.v1, axes
+	draft.latest, coverage_report
+	Vérifie que chaque axe a sources
+	08
+	08_relecteur2.py
+	Relecteur2Node
+	draft.latest
+	draft.v2
+	second œil, ton / empathie
+	09
+	09_synthese_strategique.py
+	StrategieNode
+	draft.v2, axes
+	plan
+	LLM + heuristique scoring (coef jurisprudence)
+	10
+	10_avocat_ai.py
+	AvocatAINode
+	plan, draft.v2, pieces
+	requete_finale
+	GPT-4o rôle “avocat”, style formel, appelle utils/export.render_pdf (preview)
+	11
+	11_export_final.py
+	ExportNode
+	requete_finale, pieces
+	Fichiers dossier.pdf, dossier.zip
+	utils/export.zip_dossier + write path in shared
+	Les n° 02 & 12 sont libres (extensions futures).
+________________
+
+
+4. Utils
+Module / dossier
+	Fonctions clés
+	Dépendances
+	utils/stt.py
+	`transcribe(buffer, engine="whisper"
+	"gemini")`
+	utils/legifrance/
+	oauth_token(), search(q), consult(cid)
+	httpx, dotenv
+	utils/ocr.py
+	ocr_image(bytes)
+	subprocess docker-tesseract
+	utils/anonymise.py
+	anon_text(txt)
+	re, openai
+	utils/embedding.py
+	embed(texts), faiss_index()
+	sentence-transformers, faiss-cpu
+	utils/export.py
+	render_pdf(md, dst), zip_dossier(pdf,pieces)
+	weasyprint, zipfile
+	utils/scraper.py
+	scrape_forums(keyword)
+	playwright
+	utils/cache.py
+	@ttl_cache décorateur
+	functools
+	Chaque utils → tests dédiés dans tests/utils/test_<module>.py.
+________________
+
+
+5. CLI
+poetry run defenseur-ia <fichier|"texte brut">
+
+
+1. Charge cli.py
+
+2. Injecte shared.set("input_blob", …)
+
+3. Instancie Flow([...agents])
+
+4. Sauve dossier.json à chaque étape
+
+5. Affiche progression logs.history en temps réel (rich.console)
+
+________________
+
+
+6. Server FastAPI
+Route
+	Méthode
+	Corps / Param
+	Action
+	/health
+	GET
+	–
+	200 « ok »
+	/upload_piece
+	POST
+	multipart/form-data file
+	stocke sous pieces_raw_paths
+	/run_full_flow
+	POST
+	`{dossier_id?:str, input:str
+	path}`
+	/status/{id}
+	GET
+	–
+	JSON état + % étape
+	/stream/{id}
+	WS
+	–
+	SSE → logs live
+	server/main.py monte l’app ; Uvicorn worker --workers 2.
+________________
+
+
+7. SharedStore : cycle de vie clés
+input_blob  →  narration  →  axes             →  legal_corpus
+                               ↓                    ↓
+pieces_raw_paths → pieces  → matches ——→ draft.v0 → draft.latest
+                                                     ↓
+                               web_refs → plan → requete_finale
+
+
+Sauvegardé dans dossier.json après chaque Node.
+________________
+
+
+8. Dépendance externe ⇄ util ⇄ agent
+graph LR
+  subgraph Externes
+    A1[OpenAI<br/>Whisper] --> STT
+    G1[Gemini Live] --> STT
+    LF[API Légifrance] --> LSearch
+    Tes[Tesseract] --> OCR
+  end
+  subgraph Utils
+    STT -->|text| Ecouteur
+    LSearch -->|json| Cadreur
+    OCR --> Parseur
+  end
+
+
+________________
+
+
+9. Pipeline complet (sequence)
+sequenceDiagram
+User->>CLI: passe fichier audio
+CLI->>Flow: run(shared)
+Flow->>Ecouteur: exec()
+Ecouteur->>STT: transcribe()
+STT-->>Ecouteur: texte
+Ecouteur-->>Shared: narration
+...
+Avocat->>Export: render_pdf+zip
+Export-->>Shared: path pdf/zip
+CLI-->>User: ✅ dossier.zip prêt
+
+
+________________
+
+
+10. Prochaines étapes possibles
+   * Paralleliser ParseurPreuves par pièce (asyncio.gather).
+
+   * Ajouter Redis pour job queue + WebSocket push.
+
+   * Front Vue3 minimal (uploader & viewer PDF).
+
+________________
+
+
+Tu souhaites le code d’un fichier précis ?
+📝 Ping le chemin (src/defenseur_ia/core/node.py) et on l’écrit pas-à-pas.
+::contentReference[oaicite:0]{index=0}
