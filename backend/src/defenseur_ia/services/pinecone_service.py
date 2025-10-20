@@ -115,12 +115,21 @@ class PineconeService:
             
         try:
             # Initialiser Pinecone réel
-            api_key = getattr(settings, 'PINECONE_API_KEY', 'pcsk_53kgE6_BRouDzLZuN5PPKvjykzNu2dYbBueVmTgnrBkP5gkpmrtFCgREoz8goGUF9c2UsA')
+            api_key = getattr(settings, 'PINECONE_API_KEY', None)
+            if not api_key:
+                logger.warning("⚠️ PINECONE_API_KEY non définie - basculement en mode simulation")
+                self.simulation_mode = True
+                await self.initialize()  # Réinitialiser en mode simulation
+                return
             self.pc = Pinecone(api_key=api_key)
             
             # Initialiser OpenAI pour les embeddings
             if OpenAI:
-                self.openai_client = OpenAI(api_key=getattr(settings, 'OPENAI_API_KEY', 'mock_key'))
+                openai_key = getattr(settings, 'OPENAI_API_KEY', None)
+                if openai_key:
+                    self.openai_client = OpenAI(api_key=openai_key)
+                else:
+                    logger.warning("⚠️ OPENAI_API_KEY non définie - embeddings désactivés")
             
             # Créer ou vérifier les index
             await self._ensure_indexes_exist()

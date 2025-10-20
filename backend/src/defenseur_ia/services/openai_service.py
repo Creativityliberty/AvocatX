@@ -487,18 +487,18 @@ async def example_usage():
         domain="juridique",
         research_depth="detailed"
     )
-    
+
     result = await service.deep_research(query)
-    print(f"Résultat: {result.content[:200]}...")
-    print(f"Citations: {len(result.citations)}")
-    print(f"Temps d'exécution: {result.execution_time}s")
-    
+    logger.info(f"Résultat: {result.content[:200]}...")
+    logger.info(f"Citations: {len(result.citations)}")
+    logger.info(f"Temps d'exécution: {result.execution_time}s")
+
     # Analyse juridique
     legal_result = await service.legal_analysis(
         "Demande de renouvellement de titre de séjour étudiant refusée",
         "Étudiant algérien en master, première demande de renouvellement"
     )
-    print(f"Analyse juridique: {legal_result.content[:200]}...")
+    logger.info(f"Analyse juridique: {legal_result.content[:200]}...")
 
 
 if __name__ == "__main__":

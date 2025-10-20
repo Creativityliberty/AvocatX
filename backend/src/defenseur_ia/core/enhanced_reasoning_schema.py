@@ -7,8 +7,11 @@ from typing import List, Dict, Any, Optional, Union
 from pydantic import BaseModel, Field
 from enum import Enum
 import json
+import logging
 from datetime import datetime
 import asyncio
+
+logger = logging.getLogger(__name__)
 
 from .reasoning_schema import (
     AgentReasoning, 
@@ -68,7 +71,7 @@ class EnhancedAgentReasoning(AgentReasoning):
             return experience_id
             
         except Exception as e:
-            print(f"❌ Erreur stockage expérience Pinecone: {e}")
+            logger.error(f"❌ Erreur stockage expérience Pinecone: {e}")
             return "error"
     
     async def search_similar_experiences_from_pinecone(
@@ -112,7 +115,7 @@ class EnhancedAgentReasoning(AgentReasoning):
             return experiences
             
         except Exception as e:
-            print(f"❌ Erreur recherche expériences Pinecone: {e}")
+            logger.error(f"❌ Erreur recherche expériences Pinecone: {e}")
             return []
     
     async def search_legal_knowledge(
@@ -133,7 +136,7 @@ class EnhancedAgentReasoning(AgentReasoning):
             )
             
         except Exception as e:
-            print(f"❌ Erreur recherche connaissances juridiques: {e}")
+            logger.error(f"❌ Erreur recherche connaissances juridiques: {e}")
             return []
     
     async def search_similar_cases(
@@ -156,7 +159,7 @@ class EnhancedAgentReasoning(AgentReasoning):
             )
             
         except Exception as e:
-            print(f"❌ Erreur recherche dossiers similaires: {e}")
+            logger.error(f"❌ Erreur recherche dossiers similaires: {e}")
             return []
     
     async def store_successful_reasoning_pattern(
@@ -200,7 +203,7 @@ class EnhancedAgentReasoning(AgentReasoning):
             return pattern_id
             
         except Exception as e:
-            print(f"❌ Erreur stockage pattern raisonnement: {e}")
+            logger.error(f"❌ Erreur stockage pattern raisonnement: {e}")
             return "error"
     
     async def enhance_with_semantic_memory(self, context_query: str) -> Dict[str, Any]:
@@ -285,7 +288,7 @@ class EnhancedAgentReasoning(AgentReasoning):
             return enhancement_data
             
         except Exception as e:
-            print(f"❌ Erreur enrichissement sémantique: {e}")
+            logger.error(f"❌ Erreur enrichissement sémantique: {e}")
             return enhancement_data
 
 
@@ -476,9 +479,9 @@ class MultiAgentRRLAOrchestrator:
             try:
                 agent_reasoning = await create_enhanced_agent_reasoning(agent_type)
                 self.agents[agent_type] = agent_reasoning
-                print(f"✅ Agent {agent_type} initialisé avec RRLA+Pinecone")
+                logger.info(f"✅ Agent {agent_type} initialisé avec RRLA+Pinecone")
             except Exception as e:
-                print(f"❌ Erreur initialisation agent {agent_type}: {e}")
+                logger.error(f"❌ Erreur initialisation agent {agent_type}: {e}")
     
     async def execute_pipeline_with_rrla(self, case_data: Dict[str, Any]) -> Dict[str, Any]:
         """Exécute le pipeline complet avec raisonnement RRLA"""
