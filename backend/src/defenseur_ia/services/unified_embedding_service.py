@@ -545,27 +545,27 @@ async def batch_embed_for_agent(
 if __name__ == "__main__":
     # Test du service unifié
     async def test_unified_service():
-        print("🧪 Test du service d'embedding unifié")
-        
+        logger.info("🧪 Test du service d'embedding unifié")
+
         # Initialiser le service
         await unified_embedding_service.initialize()
-        
+
         # Test embedding pour différents agents
         test_cases = [
             ("ecouteur", "Transcription audio OQTF"),
             ("cadreur_juridique", "Article L511-1 du CESEDA"),
             ("redacteur_narratif", "Récit de Marie, 32 ans, mère d'un enfant français")
         ]
-        
+
         for agent_type, text in test_cases:
             embedding = await embed_for_agent(text, agent_type)
             if embedding:
-                print(f"✅ {agent_type}: embedding {len(embedding)}D créé")
+                logger.info(f"✅ {agent_type}: embedding {len(embedding)}D créé")
             else:
-                print(f"❌ {agent_type}: échec embedding")
-        
+                logger.error(f"❌ {agent_type}: échec embedding")
+
         # Afficher les statistiques
         stats = unified_embedding_service.get_stats()
-        print(f"\n📊 Statistiques: {stats['global_stats']}")
+        logger.info(f"\n📊 Statistiques: {stats['global_stats']}")
     
     asyncio.run(test_unified_service())

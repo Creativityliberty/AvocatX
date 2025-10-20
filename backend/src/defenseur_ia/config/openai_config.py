@@ -203,11 +203,11 @@ def validate_openai_setup() -> bool:
 if __name__ == "__main__":
     try:
         config = get_openai_config()
-        print(f"Configuration OpenAI chargée:")
-        print(f"- Modèle GPT: {config.gpt_model}")
-        print(f"- Modèle Deep Research: {config.deep_research_model}")
-        print(f"- Outils disponibles: {config.available_tools}")
-        print(f"- Validation: {'✅ OK' if validate_openai_setup() else '❌ Erreur'}")
-        
+        logger.info("Configuration OpenAI chargée:")
+        logger.info(f"- Modèle GPT: {config.gpt_model}")
+        logger.info(f"- Modèle Deep Research: {config.deep_research_model}")
+        logger.info(f"- Outils disponibles: {config.available_tools}")
+        logger.info(f"- Validation: {'✅ OK' if validate_openai_setup() else '❌ Erreur'}")
+
     except Exception as e:
-        print(f"❌ Erreur lors du test de configuration: {e}")
+        logger.error(f"❌ Erreur lors du test de configuration: {e}")

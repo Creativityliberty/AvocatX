@@ -626,21 +626,21 @@ async def example_usage():
     }
     
     result = await agent.process_async(test_input)
-    
-    print(f"Statut: {getattr(result, 'status', 'unknown')}")
-    print(f"Temps d'exécution: {getattr(result, 'execution_time', 0.0)}s")
+
+    logger.info(f"Statut: {getattr(result, 'status', 'unknown')}")
+    logger.info(f"Temps d'exécution: {getattr(result, 'execution_time', 0.0)}s")
     content = getattr(result, "result", {}).get("content", "")
-    print(f"Contenu (extrait): {content[:300]}...")
-    
+    logger.info(f"Contenu (extrait): {content[:300]}...")
+
     payload = getattr(result, "result", {})
     metrics = payload.get("metrics", {})
-    print(f"Confiance moyenne: {metrics.get('average_confidence')}")
-    print(f"Citations: {len(payload.get('citations', []))}")
-    print(f"Requêtes de recherche: {payload.get('search_queries', [])}")
-    
+    logger.info(f"Confiance moyenne: {metrics.get('average_confidence')}")
+    logger.info(f"Citations: {len(payload.get('citations', []))}")
+    logger.info(f"Requêtes de recherche: {payload.get('search_queries', [])}")
+
     # Afficher les statistiques
     stats = agent.get_agent_stats()
-    print(f"Statistiques agent: {stats['performance_stats']}")
+    logger.info(f"Statistiques agent: {stats['performance_stats']}")
 
 
 if __name__ == "__main__":

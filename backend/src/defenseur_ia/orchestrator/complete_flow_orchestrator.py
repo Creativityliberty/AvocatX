@@ -5,11 +5,14 @@ Inspiré de PocketFlow - Gestion du pipeline complet du premier au dernier agent
 
 import asyncio
 import json
+import logging
 import uuid
 from datetime import datetime
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, asdict
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 from ..models import PipelineStatus
 from ..agents import *
@@ -412,7 +415,7 @@ class DefenseurFlowOrchestrator:
             try:
                 await listener(event_type, data)
             except Exception as e:
-                print(f"Error in flow listener: {e}")
+                logger.error(f"Error in flow listener: {e}")
 
     def add_flow_listener(self, listener: Callable):
         """Ajoute un listener d'événements du flow"""
@@ -457,10 +460,10 @@ async def example_usage():
     
     # Ajouter un listener pour le monitoring
     async def flow_monitor(event_type: str, data: Any):
-        print(f"Flow Event: {event_type}")
+        logger.info(f"Flow Event: {event_type}")
         if event_type == "step_completed":
             step = data["step"]
-            print(f"  - Agent {step.agent_name} completed in {step.duration}s")
+            logger.info(f"  - Agent {step.agent_name} completed in {step.duration}s")
     
     orchestrator.add_flow_listener(flow_monitor)
     
@@ -476,11 +479,11 @@ async def example_usage():
     
     # Créer et exécuter le flow
     flow_id = await orchestrator.create_flow(case_data)
-    print(f"Flow créé: {flow_id}")
+    logger.info(f"Flow créé: {flow_id}")
     
     result = await orchestrator.execute_flow(flow_id)
-    print(f"Flow terminé: {result.status}")
-    print(f"Durée totale: {result.total_duration}s")
+    logger.info(f"Flow terminé: {result.status}")
+    logger.info(f"Durée totale: {result.total_duration}s")
 
 
 if __name__ == "__main__":

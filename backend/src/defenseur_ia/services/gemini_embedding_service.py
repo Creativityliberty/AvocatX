@@ -12,15 +12,15 @@ import logging
 from datetime import datetime
 import json
 
+logger = logging.getLogger(__name__)
+
 try:
     from google import genai
     from google.genai import types
     GEMINI_AVAILABLE = True
 except ImportError:
     GEMINI_AVAILABLE = False
-    print("⚠️ Google GenAI non disponible - mode simulation activé")
-
-logger = logging.getLogger(__name__)
+    logger.warning("⚠️ Google GenAI non disponible - mode simulation activé")
 
 
 class EmbeddingTaskType(Enum):
@@ -546,22 +546,22 @@ async def embed_case_narrative(
 if __name__ == "__main__":
     # Test du service
     async def test_service():
-        print("🧪 Test du service Gemini Embedding")
-        
+        logger.info("🧪 Test du service Gemini Embedding")
+
         # Initialiser le service
         await gemini_embedding_service.initialize()
-        
+
         # Test embedding simple
         embedding = await gemini_embedding_service.create_embedding(
             "Test DEFENSEUR-IA avec Gemini",
             task_type=EmbeddingTaskType.SEMANTIC_SIMILARITY,
             dimension=EmbeddingDimension.MEDIUM
         )
-        
+
         if embedding:
-            print(f"✅ Embedding créé: {len(embedding)} dimensions")
-            print(f"📊 Statistiques: {gemini_embedding_service.get_stats()}")
+            logger.info(f"✅ Embedding créé: {len(embedding)} dimensions")
+            logger.info(f"📊 Statistiques: {gemini_embedding_service.get_stats()}")
         else:
-            print("❌ Échec création embedding")
+            logger.error("❌ Échec création embedding")
     
     asyncio.run(test_service())
