@@ -23,7 +23,8 @@ def mock_pipeline():
     pipeline = MagicMock()
     pipeline.create_flow.return_value = "test_flow_123"
     pipeline.execute_flow = AsyncMock()
-    pipeline.get_flow_status.return_value = {"status": "running", "progress": 50}
+    # Ensure get_flow_status is an async mock
+    pipeline.get_flow_status = AsyncMock(return_value={"status": "running", "progress": 50})
     return pipeline
 
 @pytest.fixture
@@ -73,7 +74,7 @@ async def test_handle_status_command_specific_flow(chat_orchestrator, mock_pipel
     # Vérifications
     assert response["status"] == "success"
     assert flow_id in response["response"]
-    assert "created" in response["response"]  # Vérifie le statut par défaut
+    assert "running" in response["response"]  # Vérifie le statut renvoyé par le mock
 
 @pytest.mark.asyncio
 async def test_handle_pause_command(chat_orchestrator, mock_pipeline):
