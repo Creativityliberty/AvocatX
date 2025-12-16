@@ -115,7 +115,17 @@ class ChatOrchestrator:
                 return await self._handle_config(user_id, args)
             elif command_type == CommandType.HELP:
                 return self._get_help()
+            elif command_type == CommandType.UNKNOWN and message.startswith('/'):
+                return {
+                    "response": f"Commande non reconnue: {message.split()[0]}",
+                    "status": "error"
+                }
             else:
+                if not message.strip() and not attachments:
+                    return {
+                        "response": "Commande non reconnue ou message vide.",
+                        "status": "error"
+                    }
                 # Analyse d'intention pour messages non-commandes
                 return await self._handle_natural_language(user_id, message)
                 
@@ -137,7 +147,7 @@ class ChatOrchestrator:
         Returns:
             Tuple (type de commande, arguments)
         """
-        if not message.startswith('/'):
+        if not message or not message.startswith('/'):
             return CommandType.UNKNOWN, []
             
         parts = message[1:].split()
@@ -203,6 +213,105 @@ class ChatOrchestrator:
             return DocumentType.EMAIL
         else:
             return DocumentType.TEXT  # Par défaut
+
+    async def _handle_status(self, user_id: str, args: List[str]) -> Dict[str, Any]:
+        """Gère la commande /status."""
+        if not args:
+            # Statut global des flux de l'utilisateur
+            user_flows = {fid: flow for fid, flow in self.active_flows.items()
+                         if flow.get("user_id") == user_id}
+
+            active_count = len([f for f in user_flows.values() if f.get("status") == "running"])
+
+            return {
+                "response": f"Statut système: Opérationnel\n{active_count} flux actifs sur {len(user_flows)} total.",
+                "status": "success",
+                "metrics": {"active_flows": active_count, "total_flows": len(user_flows)}
+            }
+        else:
+            # Statut d'un flux spécifique
+            flow_id = args[0]
+            if flow_id in self.active_flows:
+                flow = self.active_flows[flow_id]
+                if flow.get("user_id") != user_id:
+                    return {
+                        "response": "Accès non autorisé à ce flux.",
+                        "status": "error"
+                    }
+
+                # Récupérer le statut détaillé du pipeline
+                pipeline_status = await self.pipeline.get_flow_status(flow_id)
+
+                return {
+                    "response": f"Flux {flow_id}: {flow.get('status')}\nProgression: {pipeline_status.get('progress', 0)}%",
+                    "status": "success",
+                    "flow_status": pipeline_status
+                }
+            else:
+                return {
+                    "response": f"Aucun flux trouvé avec l'ID {flow_id}.",
+                    "status": "error"
+                }
+
+    async def _handle_start(self, user_id: str, args: List[str]) -> Dict[str, Any]:
+        """Gère la commande /start."""
+        try:
+            # Création d'un nouveau flux via le pipeline
+            flow_id = self.pipeline.create_flow()
+
+            # Enregistrement local
+            self.active_flows[flow_id] = {
+                "user_id": user_id,
+                "status": "created",
+                "created_at": datetime.now().isoformat()
+            }
+
+            # Démarrage effectif
+            await self.pipeline.execute_flow(flow_id)
+            self.active_flows[flow_id]["status"] = "running"
+
+            return {
+                "response": f"Flux {flow_id} démarré avec succès.",
+                "status": "success",
+                "flow_id": flow_id
+            }
+        except Exception as e:
+            logger.error(f"Erreur lors du démarrage du flux: {str(e)}")
+            return {
+                "response": "Impossible de démarrer le flux.",
+                "status": "error",
+                "error": str(e)
+            }
+
+    async def _handle_pause(self, user_id: str, args: List[str]) -> Dict[str, Any]:
+        """Gère la commande /pause."""
+        if not args:
+            return {
+                "response": "Veuillez spécifier l'ID du flux à mettre en pause.",
+                "status": "error"
+            }
+
+        flow_id = args[0]
+        if flow_id in self.active_flows:
+            flow = self.active_flows[flow_id]
+            if flow.get("user_id") != user_id:
+                return {
+                    "response": "Accès non autorisé à ce flux.",
+                    "status": "error"
+                }
+
+            # Implémenter la logique de pause dans le pipeline
+            # await self.pipeline.pause_flow(flow_id)
+            self.active_flows[flow_id]["status"] = "paused"
+            return {
+                "response": f"Flux {flow_id} mis en pause.",
+                "status": "success"
+            }
+        else:
+            return {
+                "response": f"Aucun flux trouvé avec l'ID {flow_id}.",
+                "status": "error"
+            }
     
     async def _handle_analyse(self, user_id: str, args: List[str]) -> Dict[str, Any]:
         """Gère la commande /analyse."""
